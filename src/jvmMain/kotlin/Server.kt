@@ -13,14 +13,21 @@ import org.litote.kmongo.coroutine.*
 import org.litote.kmongo.reactivestreams.KMongo
 import com.mongodb.ConnectionString
 
-val shoppingList = mutableListOf(
-    ShoppingListItem("Cucumbers 🥒", 1),
-    ShoppingListItem("Tomatoes 🍅", 2),
-    ShoppingListItem("Orange Juice 🍊", 3)
-)
+//const val dbUrl = "mongodb+srv://codereviewsystem:Qwerty1234@cluster0.d36x6.mongodb.net/codereviewsystem?retryWrites=true&w=majority"
+//val client = KMongo.createClient().coroutine // This is for local mongo db
+
+val connectionString: ConnectionString? = System.getenv("MONGODB_URI")?.let {
+    ConnectionString("$it?retryWrites=false")
+}
+
+val client = if (connectionString != null) KMongo.createClient(connectionString).coroutine else KMongo.createClient().coroutine
+val database = client.getDatabase(connectionString?.database ?: "shoppingList")
+val collection = database.getCollection<ShoppingListItem>()
 
 fun main() {
-    embeddedServer(Netty, 8080, "localhost") {
+    val port = System.getenv("PORT")?.toInt() ?: 8080
+    val host = System.getenv("HOST")?: "127.0.0.1"
+    embeddedServer(Netty, port, host) {
         install(ContentNegotiation) {
             json()
         }
@@ -49,15 +56,15 @@ fun main() {
             }
             route(ShoppingListItem.path) {
                 get {
-                    call.respond(shoppingList)
+                    call.respond(collection.find().toList())
                 }
                 post {
-                    shoppingList += call.receive<ShoppingListItem>()
+                    collection.insertOne(call.receive<ShoppingListItem>())
                     call.respond(HttpStatusCode.OK)
                 }
                 delete("/{id}") {
                     val id = call.parameters["id"]?.toInt() ?: error("Invalid delete request")
-                    shoppingList.removeIf { it.id == id }
+                    collection.deleteOne(ShoppingListItem::id eq id)
                     call.respond(HttpStatusCode.OK)
                 }
             }

@@ -1,3 +1,4 @@
+import kotlinx.html.ButtonType
 import react.*
 import react.dom.*
 import kotlinx.html.js.*
@@ -28,6 +29,10 @@ val inputComponent = fc<InputProps> { props ->
         input(InputType.text) {
             attrs.onChangeFunction = changeHandler
             attrs.value = text
+        }
+        button(classes = "btn btn-success") {
+            attrs.type = ButtonType.submit
+            + "Add"
         }
     }
 }

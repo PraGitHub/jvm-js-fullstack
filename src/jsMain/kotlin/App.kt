@@ -27,15 +27,20 @@ val app = fc<Props> { _ ->
                 shoppingList.sortedByDescending(ShoppingListItem::priority).forEach { item ->
                     button(classes = "list-group-item list-group-item-action") {
                         key = item.toString()
-                        attrs.onClickFunction = {
-                            scope.launch {
-                                deleteShoppingListItem(item)
-                                shoppingList = getShoppingList()
-                            }
-                        }
                         attrs.set("data-bs-toggle", "tooltip")
-                        attrs.set("title", "Click to remove the item")
+                        attrs.set("title", "${item.description}")
                         +"[${item.priority}] ${item.description} "
+                        button(classes = "btn btn-danger") {
+                            attrs.onClickFunction = {
+                                scope.launch {
+                                    deleteShoppingListItem(item)
+                                    shoppingList = getShoppingList()
+                                }
+                            }
+                            attrs.set("data-bs-toggle", "tooltip")
+                            attrs.set("title", "Click to remove the item")
+                            i(classes = "fa fa-trash-o"){}
+                        }
                     }
                 }
             }
